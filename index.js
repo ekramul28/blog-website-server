@@ -19,7 +19,7 @@ const client = new MongoClient(uri, {
     }
 });
 const database = client.db('blogDB').collection('blog');
-const AllBlogs = client.db('AllBlogDB').collection('blogs');
+const allWishlist = client.db('AllBlogDB').collection('blogs');
 
 async function run() {
     try {
@@ -30,12 +30,29 @@ async function run() {
             const result = await database.find().toArray();
             res.send(result);
         })
-        app.post('/addBlog', async (req, res) => {
+        app.post('/blog', async (req, res) => {
             const data = req.body;
-            const result = await AllBlogs.insertOne(data);
+            const result = await database.insertOne(data);
             console.log(data)
             res.send(result);
         })
+
+        // wishlist api
+        app.post('/wishlist', async (req, res) => {
+            const data = req.body;
+            const result = await allWishlist.insertOne(data);
+            res.send(result);
+        })
+        app.get('/wishlist', async (req, res) => {
+            console.log(req.email);
+            let query = {};
+            if (req.query?.email) {
+                query = { email: req.query.email }
+            }
+            const cursor = await allWishlist.find(query).toArray()
+            res.send(cursor)
+        })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
