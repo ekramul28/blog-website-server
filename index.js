@@ -19,6 +19,7 @@ const client = new MongoClient(uri, {
     }
 });
 const database = client.db('blogDB').collection('blog');
+const AllBlogs = client.db('AllBlogDB').collection('blogs');
 
 async function run() {
     try {
@@ -27,6 +28,12 @@ async function run() {
 
         app.get('/blog', async (req, res) => {
             const result = await database.find().toArray();
+            res.send(result);
+        })
+        app.post('/addBlog', async (req, res) => {
+            const data = req.body;
+            const result = await AllBlogs.insertOne(data);
+            console.log(data)
             res.send(result);
         })
         // Send a ping to confirm a successful connection
