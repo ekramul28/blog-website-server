@@ -43,6 +43,26 @@ async function run() {
             console.log(data)
             res.send(result);
         })
+        app.put('/blog/:id', async (req, res) => {
+            const id = req.params.id;
+
+            const product = req.body;
+            const query = { _id: new ObjectId(id) };
+            const options = { upsert: true }
+            const updatePro = {
+                $set: {
+                    name: product.name,
+                    image: product.image,
+                    category: product.category,
+                    short: product.short,
+                    longDescription: product.longDescription,
+
+                }
+            }
+            const result = await database.updateOne(query, updatePro, options);
+            res.send(result);
+        });
+
 
         // comment api
         app.post('/comment', async (req, res) => {
@@ -50,8 +70,10 @@ async function run() {
             const result = await comment.insertOne(data);
             res.send(result);
         })
-        app.get('/comment', async (req, res) => {
-            const result = await comment.find().toArray();
+        app.get('/comment/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { id: id }
+            const result = await comment.find(query).toArray();
             res.send(result);
         })
 
