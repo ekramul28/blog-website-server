@@ -20,6 +20,7 @@ const client = new MongoClient(uri, {
 });
 const database = client.db('blogDB').collection('blog');
 const allWishlist = client.db('AllBlogDB').collection('blogs');
+const comment = client.db('AllCommentDB').collection('comment');
 
 async function run() {
     try {
@@ -40,6 +41,17 @@ async function run() {
             const data = req.body;
             const result = await database.insertOne(data);
             console.log(data)
+            res.send(result);
+        })
+
+        // comment api
+        app.post('/comment', async (req, res) => {
+            const data = req.body;
+            const result = await comment.insertOne(data);
+            res.send(result);
+        })
+        app.get('/comment', async (req, res) => {
+            const result = await comment.find().toArray();
             res.send(result);
         })
 
