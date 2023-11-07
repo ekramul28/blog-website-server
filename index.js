@@ -2,12 +2,17 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser')
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+    origin: ["http://localhost:5173"],
+    credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASS}@cluster0.ktxzlkz.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -23,6 +28,20 @@ const database = client.db('blogDB').collection('blog');
 const allWishlist = client.db('AllBlogDB').collection('blogs');
 const comment = client.db('AllCommentDB').collection('comment');
 
+// middlewares
+const verifyToken = (req, res, next) => {
+    const token = req.cookie?.token;
+    if (!token) {
+        return res.status(401).send({ message: "not authorize" })
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) = {
+        if(error) {
+            return res.status(401).send({ message: "not authorize" })
+        }
+    })
+    next()
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -32,7 +51,12 @@ async function run() {
             const user = req.body;
             console.log(user);
             const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
-            res.send(token);
+            res
+                .cookie('token', token, {
+                    httpOnly: true,
+                    secure: false
+                })
+                .send({ success: true });
         })
 
         // blog api
@@ -92,12 +116,12 @@ async function run() {
         })
 
         // wishlist api
-        app.post('/wishlist', async (req, res) => {
+        app.post('/wishlist', verifyToken, async (req, res) => {
             const data = req.body;
             const result = await allWishlist.insertOne(data);
             res.send(result);
         })
-        app.get('/wishlist', async (req, res) => {
+        app.get('/wishlist', verifyToken, async (req, res) => {
             console.log(req.email);
             let query = {};
             if (req.query?.email) {
@@ -109,7 +133,7 @@ async function run() {
         // app.get('/wishlist/:id',async(req,res=>{
 
         // }))
-        app.delete('/wishlist/:id', async (req, res) => {
+        app.delete('/wishlist/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await allWishlist.deleteOne(query);
