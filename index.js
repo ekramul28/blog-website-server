@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+var jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -26,7 +27,15 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
+        // jwt token
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
+            res.send(token);
+        })
 
+        // blog api
         app.get('/blog', async (req, res) => {
             const result = await database.find().toArray();
             res.send(result);
@@ -37,6 +46,11 @@ async function run() {
             const result = await database.findOne(query);
             res.send(result);
         })
+        // app.get('/feature',async(req,res)=>{
+
+        //     const result = await database.find().toArray();
+        //     res.send(result);
+        // })
         app.post('/blog', async (req, res) => {
             const data = req.body;
             const result = await database.insertOne(data);
