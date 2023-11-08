@@ -9,8 +9,9 @@ const port = process.env.PORT || 5000;
 
 app.use(cors({
     origin: [
-        'https://blog-website-9301a.web.app',
-        'https://blog-website-9301a.firebaseapp.com'
+        // 'https://blog-website-9301a.web.app',
+        // 'https://blog-website-9301a.firebaseapp.com',
+        'http://localhost:5173'
     ],
     credentials: true
 }));
@@ -33,7 +34,8 @@ const comment = client.db('AllCommentDB').collection('comment');
 
 // middlewares
 const verifyToken = (req, res, next) => {
-    const token = req?.cookie?.token;
+    const token = req?.cookies?.token;
+
     if (!token) {
         return res.status(401).send({ message: 'not authorize' })
     }
@@ -61,7 +63,8 @@ async function run() {
             res
                 .cookie('token', token, {
                     httpOnly: true,
-                    secure: false
+                    secure: true,
+                    sameSite: 'none'
                 })
                 .send({ success: true });
         })
