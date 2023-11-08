@@ -8,7 +8,10 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+        'https://blog-website-9301a.web.app',
+        'https://blog-website-9301a.firebaseapp.com'
+    ],
     credentials: true
 }));
 app.use(express.json());
@@ -30,16 +33,20 @@ const comment = client.db('AllCommentDB').collection('comment');
 
 // middlewares
 const verifyToken = (req, res, next) => {
-    const token = req.cookie?.token;
+    const token = req?.cookie?.token;
     if (!token) {
-        return res.status(401).send({ message: "not authorize" })
+        return res.status(401).send({ message: 'not authorize' })
     }
-    jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) = {
-        if(error) {
-            return res.status(401).send({ message: "not authorize" })
+    jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) => {
+        if (error) {
+            console.log(error)
+            return res.status(401).send({ message: 'not authorize' })
         }
+        console.log('okokok', decoded)
+        req.user = decoded;
+        next()
     })
-    next()
+
 }
 
 async function run() {
@@ -57,6 +64,11 @@ async function run() {
                     secure: false
                 })
                 .send({ success: true });
+        })
+
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
         })
 
         // blog api
@@ -116,13 +128,16 @@ async function run() {
         })
 
         // wishlist api
-        app.post('/wishlist', verifyToken, async (req, res) => {
+        app.post('/wishlist', async (req, res) => {
             const data = req.body;
             const result = await allWishlist.insertOne(data);
             res.send(result);
         })
         app.get('/wishlist', verifyToken, async (req, res) => {
             console.log(req.email);
+            if (req.user.email !== req.query.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
             let query = {};
             if (req.query?.email) {
                 query = { email: req.query.email }
@@ -133,7 +148,7 @@ async function run() {
         // app.get('/wishlist/:id',async(req,res=>{
 
         // }))
-        app.delete('/wishlist/:id', verifyToken, async (req, res) => {
+        app.delete('/wishlist/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await allWishlist.deleteOne(query);
