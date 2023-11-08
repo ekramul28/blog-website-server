@@ -11,7 +11,7 @@ app.use(cors({
     origin: [
         // 'https://blog-website-9301a.web.app',
         // 'https://blog-website-9301a.firebaseapp.com',
-        'http://localhost:5173'
+        "http://localhost:5173"
     ],
     credentials: true
 }));
@@ -76,7 +76,13 @@ async function run() {
 
         // blog api
         app.get('/blog', async (req, res) => {
-            const result = await database.find().toArray();
+            let query = {};
+            console.log(req.query)
+            if (req.query?.category) {
+                query = { category: req.query.category }
+            }
+
+            const result = await database.find(query).toArray();
             res.send(result);
         })
         app.get('/blog/:id', async (req, res) => {
@@ -85,6 +91,7 @@ async function run() {
             const result = await database.findOne(query);
             res.send(result);
         })
+
         // app.get('/feature',async(req,res)=>{
 
         //     const result = await database.find().toArray();
@@ -131,7 +138,7 @@ async function run() {
         })
 
         // wishlist api
-        app.post('/wishlist', async (req, res) => {
+        app.post('/wishlist', verifyToken, async (req, res) => {
             const data = req.body;
             const result = await allWishlist.insertOne(data);
             res.send(result);
@@ -151,7 +158,7 @@ async function run() {
         // app.get('/wishlist/:id',async(req,res=>{
 
         // }))
-        app.delete('/wishlist/:id', async (req, res) => {
+        app.delete('/wishlist/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await allWishlist.deleteOne(query);
