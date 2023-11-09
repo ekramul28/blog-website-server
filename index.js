@@ -11,7 +11,7 @@ app.use(cors({
     origin: [
         // 'https://blog-website-9301a.web.app',
         // 'https://blog-website-9301a.firebaseapp.com',
-        "http://localhost:5173"
+        'http://localhost:5173'
     ],
     credentials: true
 }));
@@ -82,6 +82,21 @@ async function run() {
                 query = { category: req.query.category }
             }
 
+
+            const result = await database.find(query).toArray();
+            res.send(result);
+        })
+
+        // search api
+        app.get('/search', async (req, res) => {
+
+            const { search } = req.query;
+            const query = {
+                title: new RegExp(search, 'i')
+
+            };
+
+            console.log(query);
             const result = await database.find(query).toArray();
             res.send(result);
         })
@@ -92,11 +107,7 @@ async function run() {
             res.send(result);
         })
 
-        // app.get('/feature',async(req,res)=>{
 
-        //     const result = await database.find().toArray();
-        //     res.send(result);
-        // })
         app.post('/blog', async (req, res) => {
             const data = req.body;
             const result = await database.insertOne(data);
@@ -155,9 +166,7 @@ async function run() {
             const cursor = await allWishlist.find(query).toArray()
             res.send(cursor)
         })
-        // app.get('/wishlist/:id',async(req,res=>{
 
-        // }))
         app.delete('/wishlist/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
